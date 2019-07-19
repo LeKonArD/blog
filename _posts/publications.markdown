@@ -7,4 +7,3 @@ img:  # Add image post (optional)
 fig-caption: # Add figcaption (optional)
 tags: [Abstracts, Journals]
 ---
-dummy
