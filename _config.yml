@@ -10,9 +10,9 @@ url: "lekonard.github.io"
 site-twitter: #if your site has a twitter account, enter it here
 
 # Author Settings
-author: Leonard Konle # add your name
-author-img: konle.jpg # add your photo
-about-author:  # add description
+author: "Leonard Konle" # add your name
+author-img: "konle.jpg" # add your photo
+about-author: "Phd Student and scientific assistant at Würzburg University" # add description
 social-twitter: "Elnok_L" # add your Twitter handle
 social-facebook: # add your Facebook handle
 social-github: "LeKonArD" # add your Github handle
@@ -20,7 +20,7 @@ social-linkedin: # add your Linkedin handle
 social-email: "leonardkonle@gmail.com" # add your Email address
 
 # Disqus
-discus-identifier: mr-brown # add your discus identifier
+discus-identifier:  # add your discus identifier
 
 # Tracker
 analytics: # Google Analytics
