@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>How to use flair with keras - Personal Blog of L. Konle</title>
+
+  <!-- Edit site and author settings in `_config.yml` to make the social details your own -->
+
+    <meta content="Personal Blog of L. Konle" property="og:site_name">
+  
+    <meta content="How to use flair with keras" property="og:title">
+  
+  
+    <meta content="article" property="og:type">
+  
+  
+    <meta content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.
+" property="og:description">
+  
+  
+    <meta content="http://localhost:4000/how-to-use-flair-with-keras/" property="og:url">
+  
+  
+    <meta content="2019-07-19T14:32:20+02:00" property="article:published_time">
+    <meta content="http://localhost:4000/about/" property="article:author">
+  
+  
+    <meta content="http://localhost:4000/blog/assets/img/flair.jpg" property="og:image">
+  
+  
+    
+  
+  
+    
+    <meta content="keras" property="article:tag">
+    
+    <meta content="flair" property="article:tag">
+    
+    <meta content="word-embeddings" property="article:tag">
+    
+    <meta content="bert" property="article:tag">
+    
+    <meta content="python" property="article:tag">
+    
+  
+
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@Elnok_L">
+  
+    <meta name="twitter:title" content="How to use flair with keras">
+  
+  
+    <meta name="twitter:url" content="http://localhost:4000/how-to-use-flair-with-keras/">
+  
+  
+    <meta name="twitter:description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.
+">
+  
+  
+    <meta name="twitter:image:src" content="http://localhost:4000/blog/assets/img/flair.jpg">
+  
+
+	<meta name="description" content="">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<meta property="og:image" content="">
+	<link rel="shortcut icon" href="/blog/assets/img/favicon/favicon.ico" type="image/x-icon">
+	<link rel="apple-touch-icon" href="/blog/assets/img/favicon/apple-touch-icon.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="/blog/assets/img/favicon/apple-touch-icon-72x72.png">
+	<link rel="apple-touch-icon" sizes="144x144" href="/blog/assets/img/favicon/apple-touch-icon-144x144.png">
+	<!-- Chrome, Firefox OS and Opera -->
+	<meta name="theme-color" content="#263959">
+	<!-- Windows Phone -->
+	<meta name="msapplication-navbutton-color" content="#263959">
+	<!-- iOS Safari -->
+	<meta name="apple-mobile-web-app-status-bar-style" content="#263959">
+	<!-- Google Fonts -->
+	<link href="https://fonts.googleapis.com/css?family=PT+Serif:400,700" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
+	<!-- Font Awesome -->
+	<link rel="stylesheet" href="/blog/assets/fonts/font-awesome/css/font-awesome.min.css">
+	<!-- Styles -->
+	<link rel="stylesheet" href="/blog/assets/css/main.css">
+</head>
+
+<body>
+
+  <div class="wrapper">
+    <aside class="sidebar">
+  <header>
+    <div class="about">
+      <div class="cover-author-image">
+        <a href="/blog/"><img src="/blog/assets/img/konle.jpg" alt="Leonard Konle"></a>
+      </div>
+      <div class="author-name">Leonard Konle</div>
+      <p>Phd Student and scientific assistant at Würzburg University</p>
+    </div>
+  </header> <!-- End Header -->
+  <footer>
+    <section class="contact">
+      <h3 class="contact-title">Contact me</h3>
+      <ul>
+        
+          <li><a href="https://twitter.com/Elnok_L" target="_blank"><i class="fa fa-twitter" aria-hidden="true"></i></a></li>
+        
+        
+          <li class="github"><a href="http://github.com/LeKonArD" target="_blank"><i class="fa fa-github"></i></a></li>
+        
+        
+          <li class="email"><a href="mailto:leonardkonle@gmail.com"><i class="fa fa-envelope-o"></i></a></li>
+        
+      </ul>
+    </section> <!-- End Section Contact -->
+    <div class="copyright">
+      <p>2019 &copy; Leonard Konle</p>
+    </div>
+  </footer> <!-- End Footer -->
+</aside> <!-- End Sidebar -->
+<div class="content-box clearfix">
+  <article class="article-page">
+  <div class="page-content">
+    
+    <div class="page-cover-image">
+      <figure>
+        <img class="page-image" src=/blog/assets/img/flair.jpg alt="How to use flair with keras">
+        
+      </figure>
+    </div> <!-- End Page Cover Image -->
+    
+    <div class="wrap-content">
+      <header class="header-page">
+        <h1 class="page-title">How to use flair with keras</h1>
+        <div class="page-date"><span>2019, Jul 19&nbsp;&nbsp;&nbsp;&nbsp;</span></div>
+      </header>
+      <p>Zalando’s flair and Keras are both beginner-friendly python libraries with great interfaces.
+Keras is based on tensorflow and allows defining neural networks within a few lines of code. 
+Flair is a multilingual state-of-the-art nlp library and includes typical preprocessing steps like tokenization or POS tagging. 
+This tutorial, however, is limited to Flair’s ability to handle Word embeddings. 
+Since Flair uses pytorch and keras tensorflow, both libraries cannot be used together without some tweaking.
+NLP-applications currently require both pre-trained word embeddings and neural networks to deliver contemporary quality.
+This introduction deals with the combination of both techniques under usage of flair and keras to keep things simple.<br />
+First we define a pandas dataframe to store a dummy text classification dataset. Class 0 contents animal related text and
+class 1 texts dealing with traffic matters.</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="s">"He played with his cat in the garden."</span><span class="p">,</span>
+         <span class="s">"They went for a walk with teh dog."</span><span class="p">,</span>
+         <span class="s">"She keeps the brid in a large cage."</span><span class="p">,</span>
+         <span class="s">"The engine was broken so we had to repair the old car."</span><span class="p">,</span>
+         <span class="s">"The truck was late because of a huge traffic jam."</span><span class="p">,</span>
+         <span class="s">"He loved to go for a ride on his motorcycle in the late summer."</span><span class="p">]</span>
+<span class="n">classes</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+<span class="n">dataset</span><span class="p">[</span><span class="s">"text"</span><span class="p">]</span> <span class="o">=</span> <span class="n">texts</span>
+<span class="n">dataset</span><span class="p">[</span><span class="s">"class"</span><span class="p">]</span> <span class="o">=</span> <span class="n">classes</span>
+
+</code></pre></div></div>
+<p>The output should look like this:<br /></p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>index</td>
+      <td>text</td>
+      <td>class</td>
+    </tr>
+    <tr>
+      <td>0</td>
+      <td>He played with his cat in the garden.</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>They went for a walk with teh dog.</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>She keeps the brid in a large cage.</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>The engine was broken so we had to repair the old car.</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>The truck was late because of a huge traffic jam.</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>He loved to go for a ride on his motorcycle in the late summer.</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The next step is to chose one or multiple embeddings we want to use to transform our textdata. Flair currently supports gloVe, fastText, ELMo, Bert and its own flair-embedding.
+A common appraoch is to combine a static embedding (gloVe, fastText) with a context sensive embedding by stacking them. In this tutorial we will use fastText and Bert together.
+If you haven’t used flair by now this will take a while, since the embeddings have to be downloaded from flair repository.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">flair.embeddings</span> <span class="kn">import</span> <span class="n">WordEmbeddings</span><span class="p">,</span> <span class="n">StackedEmbeddings</span><span class="p">,</span> <span class="n">BertEmbeddings</span>
+
+<span class="n">stacked_embedding</span> <span class="o">=</span> <span class="n">StackedEmbeddings</span><span class="p">([</span><span class="n">WordEmbeddings</span><span class="p">(</span><span class="s">'en'</span><span class="p">),</span> 
+				        <span class="n">BertEmbeddings</span><span class="p">(</span><span class="s">'bert-base-uncased'</span><span class="p">)])</span>
+</code></pre></div></div>
+<p>After loading we need to somehow embed our sentences. Flair makes this super easy:</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">flair.data</span> <span class="kn">import</span> <span class="n">Sentence</span>
+
+<span class="n">text</span> <span class="o">=</span> <span class="s">"They went for a walk with the dog."</span>
+<span class="n">sentence</span> <span class="o">=</span> <span class="n">flair</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Sentence</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="c"># tokenize data and store in flairs inner format</span>
+<span class="n">stacked_embedding</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">sentence</span><span class="p">)</span> <span class="c"># add the stacked embedding</span>
+
+<span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">sentence</span><span class="p">:</span>
+  <span class="k">print</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">embedding</span><span class="p">)</span>
+</code></pre></div></div>
+<p>You could now loop through your dataset store the embeddings somewhere and feed them to your keras network later.
+But this has two downsides: First it would take quite a whilefor reading and writing, humilates your harddrive and you would have to rerun this process everytime you want to change something like the emebedding type or the maximum size of your text sequences.
+In addition the output format will be a pytorch tensor which can’t be read by keras. Instead I recomend to create a python generator to feed the network with data as needed and operating relativly fast in-memory. This looks as follows:<br /></p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">generateTrainingData</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">max_length</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">,</span> <span class="n">emb_size</span><span class="p">):</span>
+  
+  <span class="n">x_batch</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="n">y_batch</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+ 
+        <span class="n">my_sent</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">"text"</span><span class="p">]</span>
+        <span class="n">sentence</span> <span class="o">=</span> <span class="n">Sentence</span><span class="p">(</span><span class="n">my_sent</span><span class="p">)</span>
+        <span class="n">stacked_embeddings</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">sentence</span><span class="p">)</span>
+        
+        <span class="n">x</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">sentence</span><span class="p">:</span>
+          <span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">embedding</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+          <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="n">max_length</span><span class="p">:</span>
+            <span class="k">break</span>
+        
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">max_length</span><span class="p">:</span>
+          <span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">emb_size</span><span class="p">))</span>
+        
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_classes</span><span class="p">)</span>
+        <span class="n">y</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s">"class"</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
+        
+        <span class="n">x_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>            
+        <span class="n">y_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_batch</span><span class="p">)</span> <span class="o">==</span> <span class="n">batch_size</span><span class="p">:</span>
+          <span class="k">yield</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x_batch</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_batch</span><span class="p">)</span>
+
+          <span class="n">x_batch</span> <span class="o">=</span> <span class="p">[]</span>
+          <span class="n">y_batch</span> <span class="o">=</span> <span class="p">[]</span>
+</code></pre></div></div>
+<p>Don’t worry, we’ll go through this step by step. The generator takes four arguments:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">generateTrainingData</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">max_length</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">,</span> <span class="n">emb_size</span><span class="p">):</span>
+</code></pre></div></div>
+
+<table>
+  <tbody>
+    <tr>
+      <td>batch_size</td>
+      <td>Number of training examples running through your network in one batch</td>
+    </tr>
+    <tr>
+      <td>max_length</td>
+      <td>Maximum number of tokens in a training example</td>
+    </tr>
+    <tr>
+      <td>num_classes</td>
+      <td>Number of classes in your dataset</td>
+    </tr>
+    <tr>
+      <td>emb_size</td>
+      <td>Size of the used embedding for padding. If you are uncertain of your embeddings size use the code snippet below and check the output with np.shape()</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><br /></p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">x_batch</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">y_batch</span> <span class="o">=</span> <span class="p">[]</span>
+</code></pre></div></div>
+<p>Initialisation of lists to store training batches. It is common in machine learning contexts to refer x to training data and y to corresponding labels.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+</code></pre></div></div>
+<p>This is needed to keep our generator running without predefining the number of epochs and used batches.<br /></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">data</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+<p>Every training epoch the dataset will be permutet to prevent the network from simply learning the order of classes.<br /></p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">x</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">sentence</span><span class="p">:</span>
+   <span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">embedding</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span> <span class="c"># pytorch-tensor to numpy array</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="n">max_length</span><span class="p">:</span> <span class="c"># stop if maximum token legth is reached</span>
+         <span class="k">break</span>
+        
+<span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">max_length</span><span class="p">:</span> <span class="c"># fill shorter texts with zero-arrays of the embedding size</span>
+   <span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">emb_size</span><span class="p">))</span>
+</code></pre></div></div>
+
+
+      <div class="page-footer">
+        <div class="page-share">
+          <a href="https://twitter.com/intent/tweet?text=How to use flair with keras&url=http://localhost:4000/how-to-use-flair-with-keras/" title="Share on Twitter" rel="nofollow" target="_blank">Twitter</a>
+        
+        </div>
+        <div class="page-tag">
+          
+            <a href="/blog/tags#keras" class="tag">&#35; keras</a>
+          
+            <a href="/blog/tags#flair" class="tag">&#35; flair</a>
+          
+            <a href="/blog/tags#word-embeddings" class="tag">&#35; word-embeddings</a>
+          
+            <a href="/blog/tags#bert" class="tag">&#35; bert</a>
+          
+            <a href="/blog/tags#python" class="tag">&#35; python</a>
+          
+        </div>
+      </div>
+      <section class="comment-area">
+  <div class="comment-wrapper">
+    
+  </div>
+</section> <!-- End Comment Area -->
+
+    </div> <!-- End Wrap Content -->
+  </div> <!-- End Page Content -->
+</article> <!-- End Article Page -->
+
+</div>
+
+  </div>
+  
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', '', 'auto');
+  ga('send', 'pageview');
+</script> <!-- End Analytics -->
+
+</body>
+</html>
