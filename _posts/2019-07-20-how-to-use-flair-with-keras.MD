@@ -7,7 +7,7 @@ img: flair.jpg # Add image post (optional)
 fig-caption: # Add figcaption (optional)
 tags: [keras, flair, word-embeddings, bert, python]
 ---
-Zalando's flair and Keras are both beginner-friendly python libraries with great interfaces.
+Zalando's <a href="https://research.zalando.com/welcome/mission/research-projects/flair-nlp/">flair</a> and <a href="https://keras.io/why-use-keras/">Keras</a> are both beginner-friendly python libraries with great interfaces.
 Keras is based on tensorflow and allows defining neural networks within a few lines of code. 
 Flair is a multilingual state-of-the-art nlp library and includes typical preprocessing steps like tokenization or POS tagging. 
 This tutorial, however, is limited to Flair's ability to handle Word embeddings. 
@@ -77,7 +77,7 @@ def generateTrainingData(batch_size, max_length, num_classes, emb_size):
  
         my_sent = row["text"]
         sentence = Sentence(my_sent)
-        stacked_embeddings.embed(sentence)
+        stacked_embedding.embed(sentence)
         
         x = []
         for token in sentence:
@@ -137,6 +137,53 @@ for token in sentence:
 while len(x) < max_length: # fill shorter texts with zero-arrays of the embedding size
    x.append(np.zeros(emb_size))
 ```
+<br>
+This code block loops over every token in the current text segement. If the segment is longer than the maximum token length it will stop. If this is not the case
+the rest will be filled with arrays containing just zeros. To handle the pytorch tensors they are converted to numpy arrays. To make sure the network can use all
+the GPU resources available this is done with pytorch in CPU mode. 
+```python
+y = np.zeros(num_classes)
+y[row["class"]] = 1
+```
+These two lines transform classes to one-hot-encoding.
+<br>
+```python
+if len(y_batch) == batch_size:
+   yield np.array(x_batch), np.array(y_batch)
 
+   x_batch = []
+   y_batch = []
+```
+If enough examples are collected to form one batch they are handed to the network. The lists get cleared and generator starts to create the next batch.
 
+```python
+from keras.layers import Input, Dense, GRU, Bidirectional, Flatten
+from keras.optimizers import Adam
+from keras.models import Model
 
+def declare_model(batch_size, max_len, emb_size, gru_size, num_classes):
+ 
+  sample = Input(batch_shape=(batch_size, max_len, emb_size))
+  gru_out = Bidirectional(GRU(gru_size, return_sequences=True))(sample)
+  gru_out = Flatten()(gru_out)
+  predictions = Dense(num_classes, activation='sigmoid')(gru_out)
+
+  model = Model(inputs=sample, outputs=[predictions])
+  model.compile(optimizer=Adam(),loss='binary_crossentropy', metrics=["acc"])
+  print(model.summary())
+
+  return model
+m = declare_model(batch_size=2, max_len=10, emb_size=3372, gru_size=20, num_classes=2)
+```
+The next step is the definition of a keras network. I don't want to go into details because there already are several 
+pretty handy tutorials on that topic out there. For example: <a href="https://realpython.com/python-keras-text-classification/">link</a>.
+Personaly I want to recommend <a href="https://www.manning.com/books/deep-learning-with-python">"Deep Learning with Python"</a> by François Chollet.
+<br>
+```python
+gen = generateTrainingData(batch_size=2, max_length=10, num_classes=2, emb_size=3372)
+m.fit_generator(gen, steps_per_epoch=3, epochs=10, max_queue_size=10, workers=1)
+```
+Now we can start to pass batches through the network with the function fit_generator(). In contrast to using just fit() the model ca  does not know the exact size of its trainngdata, therefore it is
+needed to set steps_per_epoch to the batch count that equals a loop through the whole dataset. The argument max_queue_size holds the information on how many batches should be generated and hold in memory to provide an optimal dataflow of training data for the network. The maximum usage of parrallel cpu cores is fixed by the workers argument. It can be helpful, especially for long running tasks, to play around with batch_size, max_queue_size and workers to find the optimal parameters balancing GPU and CPU load for the fastest learninig process.<br>
+I hope you learned something by reading this tutorial. If you have any suggestions on optimizing the code, please let me know. For everyone who is bothered by copy-pasting the code-blocks seperatly
+I created a <a href="https://colab.research.google.com/drive/1lilHyxOr-zAedkj1TLbGzCFZn3H_k0mN">colab notebook</a> with everything packed together.
