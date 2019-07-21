@@ -7,4 +7,4 @@ img:  wilhelmus.jpg # Add image post (optional)
 fig-caption: # Add figcaption (optional)
 tags: [dutch, attention, wilhelmus, DH2019, word-embeddings, fastText]
 ---
-dummy
+todo
