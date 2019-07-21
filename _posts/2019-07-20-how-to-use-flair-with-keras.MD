@@ -10,17 +10,17 @@ tags: [keras, flair, word-embeddings, bert, python]
 Zalando's <a href="https://research.zalando.com/welcome/mission/research-projects/flair-nlp/">flair</a> and <a href="https://keras.io/why-use-keras/">Keras</a> are both beginner-friendly python libraries with great interfaces.
 Keras is based on tensorflow and allows defining neural networks within a few lines of code. 
 Flair is a multilingual state-of-the-art nlp library and includes typical preprocessing steps like tokenization or POS tagging. 
-This tutorial, however, is limited to Flair's ability to handle Word embeddings. 
+This tutorial, however, is limited to Flair's ability to handle word embeddings. 
 Since Flair uses pytorch and keras tensorflow, both libraries cannot be used together without some tweaking.
-NLP-applications currently require both pre-trained word embeddings and neural networks to deliver contemporary quality.
+NLP-applications currently require both pre-trained word embeddings and neural networks to deliver cutting-edge quality.
 This introduction deals with the combination of both techniques under usage of flair and keras to keep things simple.<br>
 First we define a pandas dataframe to store a dummy text classification dataset. Class 0 contents animal related text and
 class 1 texts dealing with traffic matters.
 ```python
 import pandas as pd
 texts = ["He played with his cat in the garden.",
-         "They went for a walk with teh dog.",
-         "She keeps the brid in a large cage.",
+         "They went for a walk with the dog.",
+         "She keeps the bird in a large cage.",
          "The engine was broken so we had to repair the old car.",
          "The truck was late because of a huge traffic jam.",
          "He loved to go for a ride on his motorcycle in the late summer."]
@@ -35,15 +35,15 @@ The output should look like this:<br>
 
 |index|text|	class
 |0	|He played with his cat in the garden.|	0
-|1	|They went for a walk with teh dog.|	0
-|2	|She keeps the brid in a large cage.|	0
+|1	|They went for a walk with the dog.|	0
+|2	|She keeps the bird in a large cage.|	0
 |3	|The engine was broken so we had to repair the old car. |	1
 |4	|The truck was late because of a huge traffic jam. |	1
 |5	|He loved to go for a ride on his motorcycle in the late summer.|	1
 
 
-The next step is to chose one or multiple embeddings we want to use to transform our textdata. Flair currently supports gloVe, fastText, ELMo, Bert and its own flair-embedding.
-A common appraoch is to combine a static embedding (gloVe, fastText) with a context sensive embedding by stacking them. In this tutorial we will use fastText and Bert together.
+The next step is to choose one or multiple embeddings we want to use to transform our textdata. Flair currently supports gloVe, fastText, ELMo, Bert and its own flair-embedding.
+A common appraoch is to combine a static embedding (gloVe, fastText) with a context sensitive embedding by stacking them. In this tutorial we will use fastText and Bert together.
 If you haven't used flair by now this will take a while, since the embeddings have to be downloaded from flair repository.
 
 ```python
@@ -63,8 +63,8 @@ stacked_embedding.embed(sentence) # add the stacked embedding
 for token in sentence:
   print(token.embedding)
 ```
-You could now loop through your dataset store the embeddings somewhere and feed them to your keras network later.
-But this has two downsides: First it would take quite a whilefor reading and writing, humilates your harddrive and you would have to rerun this process everytime you want to change something like the emebedding type or the maximum size of your text sequences.
+You could now loop through your dataset, store the embeddings somewhere and feed them to your keras network later.
+But this has two downsides: First it would take quite a while for reading and writing, humilates your harddrive and you would have to rerun this process everytime you want to change something like the emebedding type or the maximum size of your text sequences.
 In addition the output format will be a pytorch tensor which can't be read by keras. Instead I recomend to create a python generator to feed the network with data as needed and operating relativly fast in-memory. This looks as follows:<br>
 ```python
 def generateTrainingData(batch_size, max_length, num_classes, emb_size):
@@ -138,7 +138,7 @@ while len(x) < max_length: # fill shorter texts with zero-arrays of the embeddin
    x.append(np.zeros(emb_size))
 ```
 <br>
-This code block loops over every token in the current text segement. If the segment is longer than the maximum token length it will stop. If this is not the case
+This code block loops over every token in the current text segment. If the segment is longer than the maximum token length it will stop. If this is not the case
 the rest will be filled with arrays containing just zeros. To handle the pytorch tensors they are converted to numpy arrays. To make sure the network can use all
 the GPU resources available this is done with pytorch in CPU mode. 
 ```python
@@ -175,7 +175,7 @@ def declare_model(batch_size, max_len, emb_size, gru_size, num_classes):
   return model
 m = declare_model(batch_size=2, max_len=10, emb_size=3372, gru_size=20, num_classes=2)
 ```
-The next step is the definition of a keras network. I don't want to go into details because there already are several 
+The next step is the definition of a keras network. I don't want to go into details because there are already several 
 pretty handy tutorials on that topic out there. For example: <a href="https://realpython.com/python-keras-text-classification/">link</a>.
 Personaly I want to recommend <a href="https://www.manning.com/books/deep-learning-with-python">"Deep Learning with Python"</a> by François Chollet.
 <br>
@@ -183,7 +183,7 @@ Personaly I want to recommend <a href="https://www.manning.com/books/deep-learni
 gen = generateTrainingData(batch_size=2, max_length=10, num_classes=2, emb_size=3372)
 m.fit_generator(gen, steps_per_epoch=3, epochs=10, max_queue_size=10, workers=1)
 ```
-Now we can start to pass batches through the network with the function fit_generator(). In contrast to using just fit() the model ca  does not know the exact size of its trainngdata, therefore it is
-needed to set steps_per_epoch to the batch count that equals a loop through the whole dataset. The argument max_queue_size holds the information on how many batches should be generated and hold in memory to provide an optimal dataflow of training data for the network. The maximum usage of parrallel cpu cores is fixed by the workers argument. It can be helpful, especially for long running tasks, to play around with batch_size, max_queue_size and workers to find the optimal parameters balancing GPU and CPU load for the fastest learninig process.<br>
+Now we can start to pass batches through the network with the function fit_generator(). In contrast to using just fit() the model does not know the exact size of its trainingdata, therefore it is
+needed to set steps_per_epoch to the batch count that equals a loop through the whole dataset. The argument max_queue_size holds the information on how many batches should be generated and hold in memory to provide an optimal flow of training data for the network. The maximum usage of parallel cpu cores is fixed by the workers argument. It can be helpful, especially for long running tasks, to play around with batch_size, max_queue_size and workers to find the optimal parameters balancing GPU and CPU load for the fastest learning process.<br>
 I hope you learned something by reading this tutorial. If you have any suggestions on optimizing the code, please let me know. For everyone who is bothered by copy-pasting the code-blocks seperatly
 I created a <a href="https://colab.research.google.com/drive/1lilHyxOr-zAedkj1TLbGzCFZn3H_k0mN">colab notebook</a> with everything packed together.
