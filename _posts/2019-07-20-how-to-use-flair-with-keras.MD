@@ -13,9 +13,10 @@ Flair is a multilingual state-of-the-art nlp library and includes typical prepro
 This tutorial, however, is limited to Flair's ability to handle word embeddings. 
 Since Flair uses pytorch and keras tensorflow, both libraries cannot be used together without some tweaking.
 NLP-applications currently require both pre-trained word embeddings and neural networks to deliver cutting-edge quality.
-This introduction deals with the combination of both techniques under usage of flair and keras to keep things simple.<br>
-First we define a pandas dataframe to store a dummy text classification dataset. Class 0 contents animal related text and
-class 1 texts dealing with traffic matters.
+To keep things simple, this introduction deals with the combination 
+of both techniques.<br>
+First we define a pandas dataframe to store a dummy text classification dataset. Our task is the classification of short texts; class 0 contains 
+texts about animals and class 2 texts dealing with cars and traffic.
 ```python
 import pandas as pd
 texts = ["He played with his cat in the garden.",
@@ -44,7 +45,7 @@ The output should look like this:<br>
 
 The next step is to choose one or multiple embeddings we want to use to transform our textdata. Flair currently supports gloVe, fastText, ELMo, Bert and its own flair-embedding.
 A common appraoch is to combine a static embedding (gloVe, fastText) with a context sensitive embedding by stacking them. In this tutorial we will use fastText and Bert together.
-If you haven't used flair by now this will take a while, since the embeddings have to be downloaded from flair repository.
+If you haven't used flair before, this may take a while, since the embeddings have to be downloaded from the repository.
 
 ```python
 from flair.embeddings import WordEmbeddings, StackedEmbeddings, BertEmbeddings
@@ -64,7 +65,7 @@ for token in sentence:
   print(token.embedding)
 ```
 You could now loop through your dataset, store the embeddings somewhere and feed them to your keras network later.
-But this has two downsides: First it would take quite a while for reading and writing, humilates your harddrive and you would have to rerun this process everytime you want to change something like the emebedding type or the maximum size of your text sequences.
+But this has two downsides: First it would take quite a while for reading and writing, stresses your harddrive and you would have to rerun this process everytime you want to change something like the emebedding type or the maximum size of your text sequences.
 In addition the output format will be a pytorch tensor which can't be read by keras. Instead I recomend to create a python generator to feed the network with data as needed and operating relativly fast in-memory. This looks as follows:<br>
 ```python
 def generateTrainingData(batch_size, max_length, num_classes, emb_size):
@@ -116,7 +117,7 @@ def generateTrainingData(batch_size, max_length, num_classes, emb_size):
 x_batch = []
 y_batch = []
 ```
-Initialisation of lists to store training batches. It is common in machine learning contexts to refer x to training data and y to corresponding labels.
+Initialisation of lists to store training batches.In machine learning contexts one usually refers to the training data as x and to the corresponding labels as y.
 
 ```python
 while True:
@@ -126,7 +127,7 @@ This is needed to keep our generator running without predefining the number of e
 ```python
 data = dataset.sample(frac=1)
 ```
-Every training epoch the dataset will be permutet to prevent the network from simply learning the order of classes.<br>
+Every training epoch the dataset will be permutetated to prevent the network from simply learning the order of classes.<br>
 ```python
 x = []
 for token in sentence:
@@ -134,7 +135,9 @@ for token in sentence:
       if len(x) == max_length: # stop if maximum token legth is reached
          break
         
-while len(x) < max_length: # fill shorter texts with zero-arrays of the embedding size
+while len(x) < max_length: # fill 
+shorter texts with zero-arrays; each array has the same dimension as the 
+word embeddings
    x.append(np.zeros(emb_size))
 ```
 <br>
@@ -154,7 +157,7 @@ if len(y_batch) == batch_size:
    x_batch = []
    y_batch = []
 ```
-If enough examples are collected to form one batch they are handed to the network. The lists get cleared and generator starts to create the next batch.
+If enough examples are collected to form one batch they are handed to the network. The lists get cleared and the generator starts to create the next batch.
 
 ```python
 from keras.layers import Input, Dense, GRU, Bidirectional, Flatten
@@ -177,13 +180,13 @@ m = declare_model(batch_size=2, max_len=10, emb_size=3372, gru_size=20, num_clas
 ```
 The next step is the definition of a keras network. I don't want to go into details because there are already several 
 pretty handy tutorials on that topic out there. For example: <a href="https://realpython.com/python-keras-text-classification/">link</a>.
-Personaly I want to recommend <a href="https://www.manning.com/books/deep-learning-with-python">"Deep Learning with Python"</a> by François Chollet.
+I especially recommend <a href="https://www.manning.com/books/deep-learning-with-python">"Deep Learning with Python"</a> by François Chollet.
 <br>
 ```python
-gen = generateTrainingData(batch_size=2, max_length=10, num_classes=2, emb_size=3372)
+gen = generateTrainingData(data_set=data_set, batch_size=2, max_length=10, num_classes=2, emb_size=3372)
 m.fit_generator(gen, steps_per_epoch=3, epochs=10, max_queue_size=10, workers=1)
 ```
 Now we can start to pass batches through the network with the function fit_generator(). In contrast to using just fit() the model does not know the exact size of its trainingdata, therefore it is
 needed to set steps_per_epoch to the batch count that equals a loop through the whole dataset. The argument max_queue_size holds the information on how many batches should be generated and hold in memory to provide an optimal flow of training data for the network. The maximum usage of parallel cpu cores is fixed by the workers argument. It can be helpful, especially for long running tasks, to play around with batch_size, max_queue_size and workers to find the optimal parameters balancing GPU and CPU load for the fastest learning process.<br>
 I hope you learned something by reading this tutorial. If you have any suggestions on optimizing the code, please let me know. For everyone who is bothered by copy-pasting the code-blocks seperatly
-I created a <a href="https://colab.research.google.com/drive/1lilHyxOr-zAedkj1TLbGzCFZn3H_k0mN">colab notebook</a> with everything packed together.
+I created a colab notebook with everything packed together. You find it <a href="https://colab.research.google.com/drive/1lilHyxOr-zAedkj1TLbGzCFZn3H_k0mN">here</a>.
