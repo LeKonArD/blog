@@ -68,7 +68,7 @@ You could now loop through your dataset, store the embeddings somewhere and feed
 But this has two downsides: First it would take quite a while for reading and writing, stresses your harddrive and you would have to rerun this process everytime you want to change something like the emebedding type or the maximum size of your text sequences.
 In addition the output format will be a pytorch tensor which can't be read by keras. Instead I recomend to create a python generator to feed the network with data as needed and operating relativly fast in-memory. This looks as follows:<br>
 ```python
-def generateTrainingData(batch_size, max_length, num_classes, emb_size):
+def generateTrainingData(dataset, batch_size, max_length, num_classes, emb_size):
   
   x_batch = []
   y_batch = []
@@ -101,12 +101,13 @@ def generateTrainingData(batch_size, max_length, num_classes, emb_size):
           x_batch = []
           y_batch = []
 ```
-Don't worry, we'll go through this step by step. The generator takes four arguments:
+Don't worry, we'll go through this step by step. The generator takes five arguments:
 
 ```python
-def generateTrainingData(batch_size, max_length, num_classes, emb_size):
+def generateTrainingData(dataset, batch_size, max_length, num_classes, emb_size):
 ```
 
+|dataset| Training data stored in a pandas dataframe
 |batch_size| Number of training examples running through your network in one batch
 |max_length| Maximum number of tokens in a training example
 |num_classes| Number of classes in your dataset
@@ -164,7 +165,7 @@ from keras.layers import Input, Dense, GRU, Bidirectional, Flatten
 from keras.optimizers import Adam
 from keras.models import Model
 
-def declare_model(batch_size, max_len, emb_size, gru_size, num_classes):
+def declare_model(dataset, batch_size, max_len, emb_size, gru_size, num_classes):
  
   sample = Input(batch_shape=(batch_size, max_len, emb_size))
   gru_out = Bidirectional(GRU(gru_size, return_sequences=True))(sample)
@@ -188,5 +189,44 @@ m.fit_generator(gen, steps_per_epoch=3, epochs=10, max_queue_size=10, workers=1)
 ```
 Now we can start to pass batches through the network with the function fit_generator(). In contrast to using just fit() the model does not know the exact size of its trainingdata, therefore it is
 needed to set steps_per_epoch to the batch count that equals a loop through the whole dataset. The argument max_queue_size holds the information on how many batches should be generated and hold in memory to provide an optimal flow of training data for the network. The maximum usage of parallel cpu cores is fixed by the workers argument. It can be helpful, especially for long running tasks, to play around with batch_size, max_queue_size and workers to find the optimal parameters balancing GPU and CPU load for the fastest learning process.<br>
+But lets see how the network handles unseen sentences after facing just 6 training examples. To perform a prediction a variation of the former generator without yielding labels has to be decalred.
+```python
+def generatePredictionData(dataset, batch_size, max_length, num_classes, emb_size):
+  
+  x_batch = []
+  while True:
+    for text in dataset:
+ 
+        my_sent = text
+        sentence = Sentence(my_sent)
+        stacked_embedding.embed(sentence)
+        
+        x = []
+        for token in sentence:
+          x.append(token.embedding.cpu().detach().numpy())
+          if len(x) == max_length:
+            break
+        
+        while len(x) < max_length:
+          x.append(np.zeros(emb_size))
+          
+        x_batch.append(x)            
+        if len(x_batch) == batch_size:
+          yield np.array(x_batch)
+
+          x_batch = []
+
+test_sents = ["He held his hamster close.",
+              "She tried to start but realised there was a marten damage."]
+
+gen = generatePredictionData(dataset=test_sents, batch_size=2, max_length=10, num_classes=2, emb_size=3372)
+print(np.argmax(m.predict_generator(gen, steps=1), axis=1))
+
+# output:
+# [0 1]
+
+```
+Everything works out like expected and the first sentence is classified as animal related. The
+network doesn't even misclassify the tricky example about the 'marten damage'.<br> 
 I hope you learned something by reading this tutorial. If you have any suggestions on optimizing the code, please let me know. For everyone who is bothered by copy-pasting the code-blocks seperatly
 I created a colab notebook with everything packed together. You find it <a href="https://colab.research.google.com/drive/1lilHyxOr-zAedkj1TLbGzCFZn3H_k0mN">here</a>.
