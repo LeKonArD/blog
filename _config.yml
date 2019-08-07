@@ -24,6 +24,7 @@ discus-identifier:  # add your discus identifier
 
 # Tracker
 analytics: # Google Analytics
+google_analytics: UA—145038461-1
 
 # Build Settings
 markdown: kramdown
