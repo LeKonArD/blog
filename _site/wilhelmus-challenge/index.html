@@ -25,7 +25,7 @@
     <meta content="http://localhost:4000/about/" property="article:author">
   
   
-    <meta content="http://localhost:4000/blog/assets/img/wilhelmus.jpg" property="og:image">
+    <meta content="http://localhost:4000/blog/assets/img/metric.png" property="og:image">
   
   
     
@@ -60,9 +60,11 @@
 ">
   
   
-    <meta name="twitter:image:src" content="http://localhost:4000/blog/assets/img/wilhelmus.jpg">
+    <meta name="twitter:image:src" content="http://localhost:4000/blog/assets/img/metric.png">
   
-
+   
+  
+	
 	<meta name="description" content="">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -96,7 +98,7 @@
         <a href="/blog/"><img src="/blog/assets/img/konle.jpg" alt="Leonard Konle"></a>
       </div>
       <div class="author-name">Leonard Konle</div>
-      <p>Phd student and reseacher at Würzburg University</p>
+      <p>Phd student (Digital Humanities) at Würzburg University</p>
     </div>
   </header> <!-- End Header -->
   <footer>
@@ -125,7 +127,7 @@
     
     <div class="page-cover-image">
       <figure>
-        <img class="page-image" src=/blog/assets/img/wilhelmus.jpg alt="Wilhelmus Challenge">
+        <img class="page-image" src=/blog/assets/img/metric.png alt="Wilhelmus Challenge">
         
       </figure>
     </div> <!-- End Page Cover Image -->
@@ -135,7 +137,103 @@
         <h1 class="page-title">Wilhelmus Challenge</h1>
         <div class="page-date"><span>2019, Jul 19&nbsp;&nbsp;&nbsp;&nbsp;</span></div>
       </header>
-      <p>todo</p>
+      <p>In the run-up to the <a href="https://dh2019.adho.org/">Digital Humanities Conference 2019</a> in Utrecht, a <a href="https://dh2019.adho.org/wilhelmus-challenge/">conference challenge</a> was launched for the first time in DH history. The Challenge was about finding the by now unidentified author of Wilhelmus, known as national anthem of the Netherlands. In order to be able to solve this task, a corpus consisting of 22.000 dutch songs alongside with its authors was provided. The task was to train a classifier on that <a href="https://github.com/fbkarsdorp/meertens-song-collection/releases/tag/DH2019">dataset</a> and predict the authors of a smaller collection of 5000 songs including two versions of Wilhelmus, which came obviosly without authorship information. The idea is that the classifier, which produces the best results on unseen data, is very likely to find the right author of Wilhelmus. To avoid cheating the authors of the testset were only known by the challenge organisators. In this blogpost I will describe my approach and present the model that won in the end.<br />
+Before training starts, data must be transformed into the appropriate formats. First I converted the TEI-XML data of the corpus into plain-text and put the authors into a table. From the plain-text I could create a <a href="https://en.wikipedia.org/wiki/Document-term_matrix">document term matrix</a>  for the whole corpus (tokenization was performed with a simple regex). In the next step this matrix gets converted to <a href="https://en.wikipedia.org/wiki/Tf%E2%80%93idf">tf-idf</a> representation.<br /></p>
+<h2 id="approach-1-support-vector-machine">Approach 1: Support Vector Machine</h2>
+<p>To get a feeling for the task I started simple and just handed the tf-idf for the 8000 most frequent words to a support vector machine (SVM). The dataset is quite imbalanced and contains more tahn 250 authors. For this reason I decided not to perfrom a out-of-the-box split in testing and training data (something like 80%/20% split), but to create a testset containing just one song of each author. The result is quite disillusioning with an f1-score of .00021. This is still bad if you take the difficulty of a classification with 250+ classes into account.</p>
+<h2 id="approach-2-metric-learning--k-nearestneighbors">Approach 2: Metric Learning + K-NearestNeighbors</h2>
+<p>This second approach makes use of the python library <a href="https://umap-learn.readthedocs.io/en/latest/index.html">umap-learn</a>. It is capable of a technique called “supervised dimension reduction”. While the general aim of dimesion reduction is to transform data to a 
+lower dimensionality without losing too much of information about distances and allow to 
+investigate micro and macro structures, its supervised version makes use of labels bound to certain datapoints and weights dimensions in a way that in the lower space representation points with same labels form clusters (if your interested in metric learning, there is a nice and short lecture recording <a href="https://www.youtube.com/watch?v=M0EjrFQH49o">here</a>). You can see the result beneath this paragraph. The left picture shows unsupervised and the right one supervised dimension reduction of the 20.000 songs. Colors indicate authorship. Based on the lower dimension vectors I applied a KNN Classifier, which achieved .12 f1-score. This is still bad, but much better than the SVM.
+<img src="./../assets/img/wilhelmus.jpg" alt="Attention Visualization. Red indicates high attention scores." /></p>
+<h2 id="approach-3-pretrained-word-embeddings--recurrent-attention-network">Approach 3: Pretrained Word Embeddings + Recurrent Attention Network</h2>
+<p>The last classification is no longer based on word frequencies, but on pretrained word embedding. In short a word embedding is used to represent a word with a vector.
+There are context free embeddings like word2vec, gloVe or fastText and context-sensitive ones like ELMo, GPT or Bert. One big advantage of word embeddings as features
+for machine learning is the ability to perform transfer learning. That means information about semantic and syntactic characteristics of language infered by training an embedding
+for example on wikipedia articles can be passed to a classifier. With more complex features, the demands on the algorithm that interprets them also increase. For this reason, attempts to combine word embeddings and traditional classification methods often produce weak results. Instead I use a Neural Network for Classification. The architecture of the network is based on the Hierarchical Attention Networks for Document Classification proposed by <a href="https://www.cs.cmu.edu/~./hovy/papers/16HLT-hierarchical-attention-networks.pdf">Yang et al. (2016)</a>. I only use the word encoder and word attention parts of the network, which means that it is no longer hierarchical but rather flat. I will refer to it as Recurrent Attention Network. Here comes the code for building the network:</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">keras</span>
+<span class="kn">import</span> <span class="nn">keras.backend</span> <span class="k">as</span> <span class="n">K</span>
+<span class="kn">from</span> <span class="nn">keras</span> <span class="kn">import</span> <span class="n">initializers</span>
+<span class="kn">from</span> <span class="nn">keras</span> <span class="kn">import</span> <span class="n">regularizers</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">Input</span><span class="p">,</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">LSTM</span><span class="p">,</span> <span class="n">Concatenate</span><span class="p">,</span> 
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">concatenate</span><span class="p">,</span><span class="n">Reshape</span><span class="p">,</span> <span class="n">multiply</span><span class="p">,</span> <span class="n">GRU</span><span class="p">,</span> <span class="n">Permute</span><span class="p">,</span> 
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">merge</span><span class="p">,</span> <span class="n">Bidirectional</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">,</span> <span class="n">RepeatVector</span>
+<span class="kn">from</span> <span class="nn">keras.models</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">keras.utils</span> <span class="kn">import</span> <span class="n">plot_model</span>
+<span class="kn">from</span> <span class="nn">keras.optimizers</span> <span class="kn">import</span> <span class="n">Adadelta</span><span class="p">,</span><span class="n">Nadam</span><span class="p">,</span><span class="n">SGD</span><span class="p">,</span><span class="n">Adam</span>
+<span class="kn">from</span> <span class="nn">keras.engine.topology</span> <span class="kn">import</span> <span class="n">Layer</span>
+
+
+
+<span class="k">class</span> <span class="nc">Attention</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+	<span class="c"># Code for the attention layer from https://github.com/minqi/hnatt</span>
+
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regularizer</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                <span class="nb">super</span><span class="p">(</span><span class="n">Attention</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">regularizer</span> <span class="o">=</span> <span class="n">regularizer</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">supports_masking</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">):</span>
+                <span class="c"># Create a trainable weight variable for this layer.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_weight</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">'context'</span><span class="p">,</span> 
+                                               <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">input_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span> 
+					       <span class="n">initializer</span><span class="o">=</span><span class="n">initializers</span><span class="o">.</span><span class="n">RandomNormal</span><span class="p">(</span>
+                                               <span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">stddev</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="bp">None</span><span class="p">),</span>
+					       <span class="n">regularizer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">regularizer</span><span class="p">,</span>
+                                               <span class="n">trainable</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+                <span class="nb">super</span><span class="p">(</span><span class="n">Attention</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                <span class="n">attention_in</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+                <span class="n">attention</span> <span class="o">=</span> <span class="n">attention_in</span><span class="o">/</span><span class="n">K</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">attention_in</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="c"># use only the inputs specified by the mask</span>
+                        <span class="c"># import pdb; pdb.set_trace()</span>
+                        <span class="n">attention</span> <span class="o">=</span> <span class="n">attention</span><span class="o">*</span><span class="n">K</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="s">'float32'</span><span class="p">)</span>
+
+                <span class="n">weighted_sum</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">batch_dot</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">permute_dimensions</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">]),</span> <span class="n">attention</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">weighted_sum</span>
+
+
+<span class="k">def</span> <span class="nf">declare_model</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span><span class="p">,</span> <span class="n">emb_size</span><span class="p">,</span> <span class="n">gru_size</span><span class="p">):</span>
+  <span class="c">## Input</span>
+  <span class="n">sample</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">batch_shape</span><span class="o">=</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span><span class="p">,</span> <span class="n">emb_size</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">))</span>
+  
+  <span class="c">## Word Encoder</span>
+  <span class="n">lstm_out</span> <span class="o">=</span> <span class="n">Bidirectional</span><span class="p">(</span><span class="n">GRU</span><span class="p">(</span><span class="n">gru_size</span><span class="p">,</span> 
+                               <span class="n">return_sequences</span><span class="o">=</span><span class="bp">True</span><span class="p">))(</span><span class="n">sample</span><span class="p">)</span>
+  <span class="c">## Hidden Representation </span>
+  <span class="n">dense_transform_w</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">seq_length</span><span class="p">,</span> 
+                            <span class="n">activation</span><span class="o">=</span><span class="s">'relu'</span><span class="p">,</span> 
+                            <span class="n">name</span><span class="o">=</span><span class="s">'dense_transform_w'</span><span class="p">)(</span><span class="n">lstm_out</span><span class="p">)</span>
+  <span class="c">## Attention</span>
+  <span class="n">attention_weighted_text</span> <span class="o">=</span> <span class="n">Attention</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">'sentence_attention'</span><span class="p">)(</span><span class="n">dense_transform_w</span><span class="p">)</span>
+  <span class="c">## Prediction</span>
+  <span class="n">predictions</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">num_classes</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s">'softmax'</span><span class="p">)(</span><span class="n">attention_weighted_text</span><span class="p">)</span>
+
+  <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">sample</span><span class="p">,</span> <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">predictions</span><span class="p">])</span>
+  <span class="n">model</span><span class="o">.</span><span class="nb">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">Adam</span><span class="p">(),</span>
+              <span class="n">loss</span><span class="o">=</span><span class="s">'categorical_crossentropy'</span><span class="p">,</span>
+              <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="n">f1</span><span class="p">])</span>
+  <span class="k">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+  <span class="k">return</span> <span class="n">model</span>
+</code></pre></div></div>
+<p>The first setup takes fastText vectors trained on the dutch wikipedia, batch size 10, seq_length 1000, emb_size 300 and gru_size 128 as input. It is trained for 30 epochs an results in a
+f1-score of .72. If you are curios about the process of handing word embeddings to a keras network take a look at this <a href="">blogpost<a></a>.
+In a second attempt I replaced fastText with the <a href="https://github.com/google-research/bert/blob/master/multilingual.md">multilingual Bert model</a>, but suprisingly the performance droped to .55 f1-score. This contrasts everything
+I encountered so far when working with German texts and I think it is caused by imbalanced use of languages in the training process of bert-multilang. But of cause I can’t prove it.
+To enhence the performance of the fastText embedding a bit, I decided to take the dutch wikipedia model and train it (unsupervised) on the whole song collection. If you want to do it yourself I recommend 
+a <a href="https://github.com/ericxsun/fastText">branch</a> of fastText that was never merged to master by ericxsun. This step impoves the result to .78 f1-score. It turned out, that there was no
+overfitting and after I handed them my prediciton of the 5000 songs including wilhelmus got the feedback that it achieved .80 accuracy.<br />
+As a side product of the Recurrent Attention Network you can visualize the attention scores of words. If you look at those, you have to keep in mind, that attention can be positive e.g. 
+relevant because the usage of a word is highly profiling for an author or negative, which means it allows to negate a group of persons as possible authors. I can’t say much about it because I can’t read Dutch. Nonetheless I want to show it here (red color indicates high attention):
+<img src="./../assets/img/Wilhelmus_konle.png" alt="Attention Visualization. Red indicates high attention scores." /></a></p>
+<h2 id="final-thoughts">Final thoughts</h2>
+<p>I do not intend to proclaim, that fastText is better suited than Bert to solve this task, but I was lacking the resources and the time to train a dutch Bert model and finetune it with the song collection. Despite this I want to highlight the efficiency of domain adoption with pretrained fastText. On the other side I don’t want anyone to read this as a document classification benchmark, since I haven’t invested into large parametric studies especially in the first and second approach. My model claimed that Frans vander Straten de jongere and Nicolaes Janssens as authors of the two different versions of Wilhelmus. Both are possible, but rather unlikely from the perspective of domain experts. Taking this into account and adding the fact that there were other models with high accuracy scores that applied for the challenge with all together even more implausible candidates my conclusion is, that the real author of Wilhelmus is not present in the dataset. The chance, that I’m wrong and all models failed to uncover the right person is quite low from a statistical point of view.<br />
+Thanks for reading.</p>
+
 
       <div class="page-footer">
         <div class="page-share">
@@ -177,7 +275,7 @@
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
   })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-  ga('create', '', 'auto');
+  ga('create', 'UA-145038461-1', 'auto');
   ga('send', 'pageview');
 </script> <!-- End Analytics -->
 
