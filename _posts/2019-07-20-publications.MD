@@ -37,6 +37,7 @@ Fotis Jannidis,  Leonard Konle,  Albin Zehe, Andreas, Hotho; Markus, Krug (2018)
 Markus Krug, Ngoc Duyen Tanja Tu, Lukas  Weimer, Isabella Reger, Leonard Konle; Fotis Jannidis, Frank Puppe (2018): “Annotation and beyond – Using ATHEN Annotation and Text Highlighting Environment”.  DHd Conference Abstracts 2018. Cologne. <a href="http://dhd2018.uni-koeln.de/wp-content/uploads/boa-DHd2018-web-ISBN.pdf">link</a><br>
 
 Thomas Proisl, Stefan Evert, Fotis Jannidis, Christof Schöch, Leonard Konle, Steffen Pielström (2018): “Delta vs. N-Gram Tracing: Evaluating the Robustness of Authorship Attribution Methods”. Proceedings of the Eleventh International Conference on Language Resources and Evaluation (LREC-2018). Miyazaki. <a href="http://www.lrec-conf.org/proceedings/lrec2018/pdf/835.pdf">link</a><br>
-
+# Other
+Leonard Konle (2019): “Word Embeddings für literarische Texte”. Master Thesis. (<a href="./../Konle_Thesis.pdf">preprint</a>)
 
 
