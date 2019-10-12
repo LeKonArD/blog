@@ -38,6 +38,6 @@ Markus Krug, Ngoc Duyen Tanja Tu, Lukas  Weimer, Isabella Reger, Leonard Konle; 
 
 Thomas Proisl, Stefan Evert, Fotis Jannidis, Christof Schöch, Leonard Konle, Steffen Pielström (2018): “Delta vs. N-Gram Tracing: Evaluating the Robustness of Authorship Attribution Methods”. Proceedings of the Eleventh International Conference on Language Resources and Evaluation (LREC-2018). Miyazaki. <a href="http://www.lrec-conf.org/proceedings/lrec2018/pdf/835.pdf">link</a><br>
 # Other
-Leonard Konle (2019): “Word Embeddings für literarische Texte”. Master Thesis. (<a href="./../Konle_Thesis.pdf">preprint</a>)
+Leonrd Konle (2019): “Word Embeddings für literarische Texte”. Master Thesis. (<a href="./../Konle_Thesis.pdf">preprint</a>)
 
 
