@@ -228,5 +228,4 @@ print(np.argmax(m.predict_generator(gen, steps=1), axis=1))
 ```
 Everything works out like expected and the first sentence is classified as animal related. The
 network doesn't even misclassify the tricky example about the 'marten damage'.<br> 
-I hope you learned something by reading this tutorial. If you have any suggestions on optimizing the code, please let me know. For everyone who is bothered by copy-pasting the code-blocks seperatly
-I created a colab notebook with everything packed together. You find it <a href="https://colab.research.google.com/drive/1lilHyxOr-zAedkj1TLbGzCFZn3H_k0mN">here</a>.
+I hope you learned something by reading this tutorial. If you have any suggestions on optimizing the code, please let me know.
