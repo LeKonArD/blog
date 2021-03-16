@@ -23,6 +23,10 @@ tags: [Abstracts, Journals]
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 # Confernece Abstracts
+## 2020
+Fotis Jannidis, Leonard Konle, Peter Leinen (2020): "Confounding variables in Sub-Genre classification: instructive problems." DHd Conference Abstracts 2020. Paderbron. <a href="https://zenodo.org/record/3666690#.YFCpa51KjOh">link</a><br>
+
+Leonard Konle and Fotis Jannidis(2020): "Domain and Task Adaptive Pretraining for Language Models." CHR 2020: Workshop on Computational Humanities Research. Amsterdam. <a href="http://ceur-ws.org/Vol-2723/short33.pdf">link</a><br>
 ## 2019
 Fotis Jannidis, Leonard Konle, Peter Leinen (2019): “Thematic Complexity”. DH Conference Abstracts 2019. Utrecht. <a href="https://dev.clariah.nl/files/dh2019/boa/0504.html">link</a><br>
 
